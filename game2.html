@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev Canvas Workshop</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        /* mengatur style canvas */
+        canvas {
+            background: #eee;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- canvas digunakan sebagai bidang permainan -->
+    <canvas id="myCanvas" width="500" height="350"></canvas> <!-- mendefinisikan lebar dan tinggi canvas -->
+    <script>
+        var canvas = document.getElementById('myCanvas'); // deklarasi variabel canvas
+        var context = canvas.getContext('2d'); // mendefinisikan objek canvas
+
+        /* kecepatan game */
+        var speed = 10; 
+        var gameSpeed = 1;
+
+        /* pengaturan kotak penembak */
+        var me = {
+            x: canvas.width / 2 - 5, // posisi kotak penembak pada sumbu x
+            y: canvas.height / 2 - 5, // posisi kotak penembak pada sumbu y
+            width: 10, // lebar kotak penembak
+            height: 10 // panjang kotak penembak
+        }
+
+        var bullets = []; // deklarasi variabel peluru
+        var wallLength = 200; // mendefinisikan variabel panjang dinding yaitu 200
+        var walls = { // deklarasi variabel dinding
+            'left': { // dinding kiri
+                x: 10, // posisi dinding pada sumbu x
+                y: canvas.height / 2 - wallLength / 2, // posisi dinding pada sumbu y
+                width: 10, // lebar dinding
+                height: wallLength, // tinggi dinding
+                'pos': 'left'
+            },
+            'right': { // dinding kanan
+                x: canvas.width - 20,
+                y: canvas.height / 2 - wallLength / 2,
+                width: 10, // lebar dinding
+                height: wallLength, // tinggi dinding
+                'pos': 'right'
+            },
+            'top': { // dinding atas
+                x: canvas.width / 2 - wallLength,
+                y: 10,
+                width: wallLength * 2, // lebar dinding
+                height: 10, // tinggi dinding
+                'pos': 'top'
+            },
+            'bottom': { // dinding bawah
+                x: canvas.width / 2 - wallLength,
+                y: canvas.height - 20,
+                width: wallLength * 2, // lebar dinding
+                height: 10, // tinggi dinding
+                'pos': 'bottom'
+            },
+        };
+
+        var gravity = 0.2; // mendefinisikan variabel gravitasi sebesar 0.2
+        var bounce = 4; // mendefinisikan variabel bounce
+        var distance = 70; // mendefinisikan variabel distance
+        var dir = '';
+
+        document.onkeyup = function (e) { // function untuk mendeteksi aksi dari user, seperti menekan tombol
+            if (!e) {
+                e = window.e;
+            }
+            var code = e.keyCode; // mendeklarasikan key di keyboard yang diklik user
+            if (e.charCode && codee == 0) {
+                code = e.charCode; // nomer mendefinisikan keyboard
+            }
+
+            switch (code) {
+                case 37://left
+                if (dir != 'left')
+                    dir = 'left';
+                bullets.push({ // mengeluarkan peluru ke arah kiri
+                    x: me.x,
+                    y: me.y,
+                    width: 10, // lebar peluru
+                    height: 10, // tinggi peluru
+                    dir: dir
+                });
+                break;
+                case 40: // bawah
+                if (dir != 'down')
+                    dir = 'down';
+                bullets.push({ //mengeluarkan peluru ke arah bawah
+                    x: me.x,
+                    y: me.y,
+                    width: 10, // lebar peluru
+                    height: 10, // tinggi peluru
+                    dir: dir
+                });
+                break;
+                case 39: // kanan
+                if (dir != 'right')
+                    dir = 'right';
+                bullets.push({ //mengeluarkan peluru ke arah kanan
+                    x: me.x,
+                    y: me.y,
+                    width: 10, // lebar peluru
+                    height: 10, // tinggi peluru
+                    dir: dir
+                });
+                break;
+                case 38: // atas
+                if (dir != 'up')
+                    dir = 'up';
+                bullets.push({ //mengeluarkan peluru ke arah atas
+                    x: me.x,
+                    y: me.y,
+                    width: 10, // lebar peluru
+                    height: 10, // tinggi peluru
+                    dir: dir
+                });
+                break;
+            }
+
+        }
+
+        var wallSpeed = 0.2; //kecepatan dinding
+        var walletBackward = 20;
+        var score = 0; // deklarasi variabel score
+        function makeWalls() { // function untuk membuat dinding
+            for (var index in walls) {
+                var wall = walls[index];
+                context.beginPath();
+                context.rect(wall.x, wall.y, wall.width, wall.height); // dinding berbentuk rectangle
+                context.fillStyle = "blue"; // dinding berwarna biru
+                context.fill();
+                context.closePath();
+                if (wall.pos == 'left') { // left
+                    wall.x += wallSpeed;
+                    if ((wall.x + wall.width) >= me.x) {
+                        loose();
+                    }
+                }
+
+                if (wall.pos == 'right') { // right
+                    wall.x -= wallSpeed;
+                    if ((wall.x + wall.width) <= me.x) {
+                        loose();
+                    }
+                }
+
+                if (wall.pos == 'top') { //top
+                    wall.y += wallSpeed;
+                    if ((wall.y + wall.height) >= me.y) {
+                        loose();
+                    }
+                }
+
+                if (wall.pos == 'bottom') { // bottom
+                    wall.y -= wallSpeed;
+                    if ((wall.y + wall.height) <= me.y) {
+                        loose();
+                    }
+                }
+
+                // console.log(walls[wall]);
+            }
+
+        }
+
+        function loose() {
+            alert('You Lose! score : ' + score); // untuk menampilkan alert score, jika kalah
+        }
+        var collid = false; // deklarasi variabel collid bernilai salah
+        function makeBullet() { // function untuk membuat peluru
+            for (bullet of bullets) {
+                context.beginPath(); // memulai membuat peluru (bullet)
+                context.rect(bullet.x, bullet.y, bullet.width, bullet.height); // peluru berbentuk kotak
+                context.fillStyle = "red"; // peluru berwarna merah
+                context.fill();
+                context.closePath();
+                if (bullet.dir == 'left') { //kiri
+                    bullet.x -= 10;
+                }
+                if (bullet.dir == 'right') { //kanan
+                    bullet.x += 10;
+                }
+                if (bullet.dir == 'up') { //atas
+                    bullet.y -= 10;
+                }
+                if (bullet.dir == 'down') { //bawah
+                    bullet.y += 10;
+                }
+
+                if (bullet.x >= canvas.width || bullet.x <= 0 || bullet.y >= canvas.height || bullet.y <= 0) {
+                    bullets.splice(bullets.indexOf(bullet), 1);
+                }
+
+                if (bullet.dir == 'right') { // kanan
+                   if  (bullet.x >= walls['right'].x) {
+                    walls['right'].x = walls['right'].x + walletBackward;
+                collid = true;
+                }
+
+            }
+
+            if (bullet.dir == 'up') { // atas
+                if (bullet.y <= walls['top'].y) {
+                    walls['top'].y = walls['top'].y - walletBackward;
+                    collid = true;
+                }
+
+            }
+
+            if (bullet.dir == 'down') { // bawah
+                if (bullet.y >= walls['bottom'].y) {
+                    walls['bottom'].y = walls['bottom'].y + walletBackward;
+                    collid = true;
+                }
+
+            }
+
+            if (bullet.dir == 'left') { // kiri
+                if (bullet.x <= walls['left'].x) {
+                    walls['left'].x = walls['left'].x - walletBackward;
+                    collid = true;
+                }
+
+            }
+
+            // cek kondisi apakah bertabrakan
+            if (collid) {
+                bullets.splice(bullets.indexOf(bullet), 1);
+                collid = false; // tidak bertabrakan
+                score++; // score bertambah
+            }
+
+        }
+    }
+
+    function removeBullet(index) { // menghilangkan peluru
+        bullets.splice(index, 1);
+    }
+
+    function makeMe() { // function untuk membuat kotak penembak
+        context.beginPath();
+        context.rect(me.x, me.y, me.width, me.height); // penembak berbentuk kotak
+        context.fillStyle = "green"; // berwarna hijau
+        context.fill();
+        context.closePath();
+
+    }
+
+    // mengembalikan nilai angka
+    function rnd(min, max) {
+        var r = Math.round(Math.random() * (max - min) + min); //mengembalikan nilai angka
+        return (r - r % speed);
+    }
+    var wallPoses = ['left', 'right', 'top', 'bottom'];
+    var frame = 0;
+    (function loop() {
+        requestAnimationFrame(function() { // Memulai animation frame javascript
+            context.clearRect(0, 0, canvas.width, canvas.height); // Membersihkan canvas
+            makeMe(); // pemanggilan function makeMe
+            makeBullet(); // pemanggilan function makeBullet
+            makeWalls(); // pemanggilan function makeWalls
+            if (score % 50 == 0) { // cek kondisi apabila score modulus 50 sama dengan 0
+                walletBackward -= 1;
+                wallSpeed += 0.1; // kecepatan bertambah
+                score += 1; // penambahan score
+                console.log(score); // menampilkan score
+                console.log(wallSpeed); // menjalankan syntax wallspeed
+                console.log(walletBackward);
+
+            }
+
+            if(frame%gameSpeed == 0) {
+                frame++;
+            }
+            loop(); // perulangan
+        })
+    }) ();
+    </script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Game dengan Javascript dan HTML</title>
+    <style>
+        /* batas sisi tepi */
+        * { padding: 0; margin: 0; }
+
+        /* menambahkan background pada canvas */ 
+        canvas { background-image: url("bg2.gif"); background-repeat: 
+    no-repeat; background-size: cover; display: block; margin: 0 auto; } 
+    </style>
+</head>
+<body>
+    <!-- mendefinisikan lebar dan tinggi canvas -->
+    <canvas id="myCanvas" width="500" height="350"></canvas> 
+    <script>
+        var canvas = document.getElementById('myCanvas'); // deklarasi variabel canvas
+        var context = canvas.getContext('2d'); // Membuat canvas sebagai konten dua dimensi
+        /* kecepatan game */
+        var speed = 10;
+        gameSpeed = 100;
+        // deklarasi variabel burung
+        var bird = {
+            x: canvas.width / 2, // posisi burung berdasarkan sumbu x
+            y: canvas.height / 2, // posisi burung berdasarkan sumbu y
+            vx: 0,
+            vy: 1
+        };
+
+        var pip = []; // deklarasi variabel pipa
+
+        var gravity = 0.2; // mendefinisikan variabel gravitasi sebesar 0.2
+        var bounce = 4; // mendefinisikan variabel bounce
+        var distance = 100; // mendefinisikan variabel distance
+        var dir = 'left';
+
+        document.onkeydown = function (e) { // function untuk mendeteksi aksi dari user, seperti menekan tombol
+            if (!e) {
+                e = window.e;
+            }
+            var code = e.keyCode; // mendeklarasikan key di keyboard yang diklik user
+            if (e.charCode && codee == 0) {
+                code = e.charCode; // nomer mendefinisikan keyboard
+            }
+            switch (code) {
+                case 37://left
+                    if (dir != 'right')
+                        dir = 'left';
+                    break;
+                case 38: //up
+                    if (dir != 'down')
+                        dir = 'up';
+                    break;
+                case 39: //right
+                    if (dir != 'left')
+                        dir = 'right';
+                    break;
+                case 40: //down
+                    if (dir != 'up')
+                        dir = 'down';
+                    break;
+
+            }
+        }
+
+        var b = 0.8;
+        function makeBird() { // function untuk membuat burung
+            context.beginPath();
+            context.arc(bird.x, bird.y, 8, 0, 2*Math.PI); // burung berbentuk lingkaran
+            context.fillStyle = "lavenderblush"; // warna burung
+            context.fill();
+            context.closePath();
+
+            bird.y += bird.vy;
+            bird.vy += gravity;
+            if (dir == 'up') {
+                bird.vy = -bounce;
+                dir = '';
+            }
+
+            if (bird.y + 10 >= canvas.height) {
+                // dir = 'up';
+            }
+        }
+
+        function makePip() { // function untuk membuat pipa
+
+            for (p of pip) {
+                
+                context.beginPath(); // membuat gambar pipa atas
+                context.rect(p.top.x, p.top.y, p.top.width, p.top.height); // pipa berbentuk rectangle
+                context.fillStyle = 'mediumslateblue'; // berwarna medium slate blue
+                context.fill();
+                context.closePath();
+
+                p.bottom.y = p.top.height + distance;
+                p.bottom.height = (canvas.height - p.bottom.y);
+
+                
+                context.beginPath(); // membuat gambar pipa bawah
+                context.rect(p.bottom.x, p.bottom.y, p.bottom.width, p.bottom.height); // pipa berbentuk rectangle
+                context.fillStyle = 'lightgrey'; // berwarna medium light grey
+                context.fill();
+                context.closePath();
+
+                p.bottom.x -= 1;
+                p.top.x -= 1;
+
+                if (p.top.x < -10) {
+                    pip.shift();
+                }
+
+                // cek kondisi jika burung bertabrakan dengan pipa atas atau pipa bawah
+                if (isCollideB(bird, p.bottom) || isCollideT(bird, p.top) || bird.y + 10 >= canvas.height) {
+                    alert('Your Score : ' + score); // muncul alert score
+                    window.location.reload();
+                }
+
+                // jika score modulus 10 sama dengan 0
+                if (score % 10 == 0) {
+                    console.log(distance);
+                    score += 1; // score bertambah
+                    distance -= 5; // distance berkurang
+                }
+
+            }
+        }
+
+        // apabila burung bertabrakan dengan pipa bawah
+        function isCollideB(b, p) {
+            return (
+                (b.x + 10 > p.x) &&
+                (b.x < p.x + 10) &&
+                (b.y > p.y || b.y + 10 > p.y)
+            );
+        }
+
+        // apabila burung bertabrakan dengan pipa atas
+        function isCollideT(b, p) {
+            return (
+                (b.x + 10 > p.x) &&
+                (b.x < p.x + 10) &&
+                (b.y < p.y + p.height)
+            );
+        }
+
+        // mengembalikan nilai
+        function rnd(min, max) {
+            var r = Math.round(Math.random() * (max - min) + min); //mengembalikan nilai angka
+            return (r - r % speed);
+        }
+
+        var score = 0; // deklarasi variabel score
+        var frame = 0; // deklarasi variabel frame
+        (function loop() { // function perulangan sampai kondisi dinyatakan salah
+            requestAnimationFrame(function () { // Memulai animation frame javascript
+                context.clearRect(0, 0, canvas.width, canvas.height); // Membersihkan canvas
+                if (frame % gameSpeed == 0) {
+                    pip.push({
+                        top: {
+                            x: canvas.width,
+                            y: 0,
+                            height: rnd(70, 140), // tinggi pipa atas
+                            width: 25, // lebar pipa atas
+                        },
+                        bottom: {
+                            x: canvas.width,
+                            y: 0,
+                            height: rnd(90, 150), // tinggi pipa bawah
+                            width: 25, // lebar pipa bawah
+                        }
+                    });
+                    score++; // score akan terus bertambah
+                }
+                makeBird(); // pemanggilan function makeBird
+                makePip(); // pemanggilan function makePip
+                frame++;
+                loop(); // perulangan
+            })
+        })();
+    </script>
+</body>
+</html>
